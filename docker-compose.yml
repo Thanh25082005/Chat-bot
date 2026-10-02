@@ -1,0 +1,9 @@
+services:
+  olpai-chatbot:
+    build: .
+    image: olpai-chatbot:latest
+    container_name: olpai-chatbot
+    ports:
+      - "5000:5000"
+    env_file: .env
+    restart: unless-stopped
