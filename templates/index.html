@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OLPAI Chatbot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #23263a;
+      --border: #2e3250;
+      --accent: #6c63ff;
+      --accent-hover: #5a52e0;
+      --user-bg: #6c63ff;
+      --bot-bg: #23263a;
+      --text: #e8eaf6;
+      --text-muted: #8b90b8;
+      --radius: 16px;
+      --radius-sm: 8px;
+      --warn: #f0a500;
+      --danger: #e05252;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 14px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .logo { height: 36px; display: flex; align-items: center; }
+    .logo img { height: 36px; width: auto; object-fit: contain; }
+
+    header h1 { font-size: 18px; font-weight: 700; }
+    header span { font-size: 13px; color: var(--text-muted); margin-left: 2px; }
+
+    .header-divider {
+      width: 1px; height: 28px;
+      background: var(--border);
+      margin: 0 4px; flex-shrink: 0;
+    }
+
+    .badge {
+      margin-left: auto;
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 20px;
+      color: var(--text-muted);
+    }
+
+    /* ── Token bar ── */
+    .token-bar-wrap {
+      padding: 6px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .token-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .token-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .token-label strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .token-label strong.warn { color: var(--warn); }
+    .token-label strong.danger { color: var(--danger); }
+
+    .token-track {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .token-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.4s ease, background 0.3s;
+    }
+
+    .token-fill.warn  { background: var(--warn); }
+    .token-fill.danger { background: var(--danger); }
+
+    /* ── Chat ── */
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    #chat-container::-webkit-scrollbar { width: 6px; }
+    #chat-container::-webkit-scrollbar-track { background: transparent; }
+    #chat-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      max-width: 800px;
+      width: 100%;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot  { margin-right: auto; }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .message.user .avatar { background: var(--user-bg); }
+    .message.bot  .avatar { background: var(--surface2); border: 1px solid var(--border); }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      line-height: 1.65;
+      font-size: 15px;
+      max-width: calc(100% - 50px);
+      word-break: break-word;
+    }
+
+    .message.user .bubble {
+      background: var(--user-bg);
+      color: #fff;
+      border-bottom-right-radius: var(--radius-sm);
+    }
+
+    .message.bot .bubble {
+      background: var(--bot-bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: var(--radius-sm);
+    }
+
+    .bubble pre {
+      background: #12141f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .bubble code {
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      background: #12141f;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .bubble pre code { background: none; padding: 0; }
+
+    .cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Limit banner ── */
+    .limit-banner {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      background: #2a1a1a;
+      border: 1px solid var(--danger);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .limit-banner p { font-size: 14px; color: #f8a0a0; margin-bottom: 12px; line-height: 1.6; }
+
+    .limit-banner button {
+      background: var(--danger);
+      border: none;
+      color: #fff;
+      padding: 9px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .limit-banner button:hover { opacity: 0.85; }
+
+    /* ── Welcome ── */
+    .welcome {
+      text-align: center;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    .welcome .icon { font-size: 56px; margin-bottom: 16px; }
+    .welcome h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .welcome p { color: var(--text-muted); font-size: 15px; max-width: 400px; margin: 0 auto; }
+
+    .suggestions {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-top: 20px;
+    }
+
+    .suggestion-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .suggestion-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 16px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: flex-end;
+      max-width: 800px; margin: 0 auto;
+    }
+
+    #user-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 16px;
+      resize: none; outline: none;
+      transition: border-color 0.2s;
+      min-height: 48px; max-height: 160px;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+
+    #user-input:focus { border-color: var(--accent); }
+    #user-input::placeholder { color: var(--text-muted); }
+    #user-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #send-btn {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border: none; border-radius: var(--radius);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+      color: white; font-size: 20px;
+    }
+
+    #send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    #send-btn:active:not(:disabled) { transform: scale(0.95); }
+    #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #clear-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      padding: 0 14px; height: 48px;
+      cursor: pointer; font-size: 13px;
+      transition: all 0.15s; flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    #clear-btn:hover { border-color: #e05252; color: #e05252; }
+
+    .hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: #2a1010;
+      border: 1.5px solid var(--danger);
+      border-radius: var(--radius);
+      padding: 16px 22px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 320px;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 9999;
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      opacity: 0;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .toast-body { flex: 1; }
+
+    .toast-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f87171;
+      margin-bottom: 4px;
+    }
+
+    .toast-msg {
+      font-size: 13px;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .toast-close:hover { color: var(--text); }
+
+    .toast-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .toast-btn-new {
+      background: var(--danger);
+      border: none;
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .toast-btn-new:hover { opacity: 0.85; }
+
+    .toast-btn-dismiss {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .toast-btn-dismiss:hover { border-color: var(--text-muted); color: var(--text); }
+
+    /* ── History ── */
+    select.badge { cursor: pointer; outline: none; font-family: inherit; }
+    select.badge:hover:not(:disabled) { border-color: var(--accent); }
+    select.badge:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #history-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    #history-btn:hover { border-color: var(--accent); }
+
+    #history-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 320px;
+      max-width: 90vw;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+      z-index: 9000;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+    }
+
+    #history-panel.show { transform: none; }
+
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .history-head button {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: 18px; cursor: pointer;
+    }
+
+    .history-head button:hover { color: var(--text); }
+
+    #history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .history-item:hover { border-color: var(--accent); }
+    .history-item.active { border-color: var(--accent); background: #2a2d4a; }
+
+    .history-info { flex: 1; min-width: 0; }
+
+    .history-title {
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .history-del {
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer; font-size: 14px;
+    }
+
+    .history-del:hover { color: var(--danger); }
+
+    .view-banner {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .view-banner button {
+      margin-left: 10px;
+      background: var(--accent);
+      border: none; color: #fff;
+      padding: 6px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="/static/icon/logo-ngang.svg" alt="HAUI Logo" />
+  </div>
+  <div class="header-divider"></div>
+  <div>
+    <h1>OLPAI Chat <span>by HaUI</span></h1>
+  </div>
+  <select id="model-select" class="badge" title="Chọn model">
+    {% for m in models %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+  </select>
+  <button id="history-btn" onclick="toggleHistory()">📜 Lịch sử</button>
+</header>
+
+<!-- History panel -->
+<aside id="history-panel">
+  <div class="history-head">
+    <span>📜 Lịch sử chat</span>
+    <button onclick="toggleHistory()" title="Đóng">✕</button>
+  </div>
+  <div id="history-list"></div>
+</aside>
+
+<!-- Toast notification -->
+<div class="toast" id="limit-toast">
+  <div class="toast-icon">🚫</div>
+  <div class="toast-body">
+    <div class="toast-title">Phiên chat đã hết token!</div>
+    <div class="toast-msg">Bạn đã sử dụng hết <strong>2000 token</strong> trong phiên này.<br>Hãy bắt đầu phiên mới để tiếp tục trò chuyện.</div>
+    <div class="toast-actions">
+      <button class="toast-btn-new" onclick="newSession(); hideToast()">🔄 Phiên mới</button>
+      <button class="toast-btn-dismiss" onclick="hideToast()">Đã hiểu</button>
+    </div>
+  </div>
+  <button class="toast-close" onclick="hideToast()" title="Đóng">✕</button>
+</div>
+
+<!-- Token progress bar -->
+<div class="token-bar-wrap">
+  <div class="token-bar-row">
+    <span class="token-label">Token: <strong id="token-count">0</strong> / 2000</span>
+    <div class="token-track">
+      <div class="token-fill" id="token-fill"></div>
+    </div>
+    <span class="token-label" id="token-pct" style="min-width:38px;text-align:right">0%</span>
+  </div>
+</div>
+
+<div id="chat-container">
+  <div class="welcome" id="welcome">
+    <div class="icon">💬</div>
+    <h2>Xin chào! Tôi là OLPAI</h2>
+    <p>Trợ lý AI thông minh, sẵn sàng trả lời mọi câu hỏi của bạn.</p>
+    <div class="suggestions">
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Giải thích lỗ đen vũ trụ là gì?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Viết code Python đọc file CSV</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Dịch "Hello World" sang tiếng Việt</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Tóm tắt AI là gì trong 3 câu</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="input-row">
+    <button id="clear-btn" onclick="newSession()" title="Phiên mới">🔄 Phiên mới</button>
+    <textarea id="user-input" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)" rows="1"></textarea>
+    <button id="send-btn" onclick="sendMessage()" title="Gửi">➤</button>
+  </div>
+  <p class="hint">Enter để gửi · Shift+Enter xuống dòng · Tối đa 2000 token / phiên</p>
+</footer>
+
+<script>
+  const TOKEN_LIMIT = 2000;
+
+  const chatContainer = document.getElementById('chat-container');
+  const userInput     = document.getElementById('user-input');
+  const sendBtn       = document.getElementById('send-btn');
+  const tokenCount    = document.getElementById('token-count');
+  const tokenFill     = document.getElementById('token-fill');
+  const tokenPct      = document.getElementById('token-pct');
+  const modelSelect   = document.getElementById('model-select');
+
+  // Remember the last chosen model (falls back to the first in the list)
+  const savedModel = localStorage.getItem('olpai_model');
+  if (savedModel && [...modelSelect.options].some(o => o.value === savedModel)) {
+    modelSelect.value = savedModel;
+  }
+  modelSelect.addEventListener('change', () => localStorage.setItem('olpai_model', modelSelect.value));
+
+  let messages   = [];
+  let totalTokens = 0;
+  let isStreaming = false;
+  let sessionLimited = false;
+
+  // ── Session history (localStorage) ──
+  const STORAGE_KEY = 'olpai_sessions';
+  let currentId  = newId();
+  let viewingOld = false;
+
+  function newId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function loadSessions() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveSession() {
+    if (viewingOld || !messages.length) return;
+    const sessions = loadSessions();
+    const idx = sessions.findIndex(s => s.id === currentId);
+    const first = messages.find(m => m.role === 'user');
+    const entry = {
+      id: currentId,
+      startedAt: idx >= 0 ? sessions[idx].startedAt : Date.now(),
+      title: first ? first.content.slice(0, 60) : 'Phiên chat',
+      messages,
+    };
+    if (idx >= 0) sessions[idx] = entry; else sessions.push(entry);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch {}
+    renderHistory();
+  }
+
+  function toggleHistory() {
+    renderHistory();
+    document.getElementById('history-panel').classList.toggle('show');
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('history-list');
+    const sessions = loadSessions().sort((a, b) => b.startedAt - a.startedAt);
+    if (!sessions.length) {
+      list.innerHTML = '<div class="history-empty">Chưa có lịch sử chat.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    for (const s of sessions) {
+      const item = document.createElement('div');
+      const active = viewingOld ? s.id === viewingId : s.id === currentId;
+      item.className = 'history-item' + (active ? ' active' : '');
+      item.innerHTML = `
+        <div class="history-info">
+          <div class="history-title">${escHtml(s.title)}</div>
+          <div class="history-meta">${new Date(s.startedAt).toLocaleString('vi-VN')} · ${s.messages.length} tin nhắn</div>
+        </div>
+        <button class="history-del" title="Xóa">🗑</button>`;
+      item.onclick = () => viewSession(s.id);
+      item.querySelector('.history-del').onclick = (e) => {
+        e.stopPropagation();
+        deleteSession(s.id);
+      };
+      list.appendChild(item);
+    }
+  }
+
+  let viewingId = null;
+
+  function viewSession(id) {
+    if (isStreaming) return;
+    if (id === currentId && !viewingOld) {
+      document.getElementById('history-panel').classList.remove('show');
+      return;
+    }
+    const s = loadSessions().find(x => x.id === id);
+    if (!s) return;
+
+    if (!viewingOld) saveSession();
+    viewingOld = true;
+    viewingId  = id;
+    hideToast();
+
+    chatContainer.innerHTML = '';
+    for (const m of s.messages) {
+      const bubble = appendMessage(m.role === 'user' ? 'user' : 'bot', m.content);
+      if (m.role !== 'user') bubble.innerHTML = renderMarkdown(m.content);
+    }
+    const banner = document.createElement('div');
+    banner.className = 'view-banner';
+    banner.innerHTML = `📜 Đang xem phiên cũ (${new Date(s.startedAt).toLocaleString('vi-VN')}) — chỉ đọc.
+      <button onclick="newSession()">🔄 Phiên mới</button>`;
+    chatContainer.appendChild(banner);
+    chatContainer.scrollTop = 0;
+
+    userInput.disabled = true;
+    sendBtn.disabled   = true;
+    userInput.placeholder = 'Đang xem lịch sử — bấm "Phiên mới" để chat tiếp.';
+    updateTokenBar(s.messages.reduce((sum, m) => sum + estimateTokens(m.content), 0));
+    document.getElementById('history-panel').classList.remove('show');
+    renderHistory();
+  }
+
+  function deleteSession(id) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(loadSessions().filter(s => s.id !== id)));
+    if (viewingOld && viewingId === id) newSession();
+    else if (id === currentId) { messages = []; currentId = newId(); newSession(); }
+    renderHistory();
+  }
+
+  // Rough token estimate: ~4 chars per token (works well for both English & Vietnamese)
+  function estimateTokens(text) {
+    return Math.ceil(text.length / 4);
+  }
+
+  function updateTokenBar(used) {
+    totalTokens = used;
+    const pct = Math.min(100, Math.round((used / TOKEN_LIMIT) * 100));
+
+    tokenCount.textContent = used;
+    tokenPct.textContent   = pct + '%';
+    tokenFill.style.width  = pct + '%';
+
+    // Color states
+    tokenCount.className = pct >= 100 ? 'danger' : pct >= 75 ? 'warn' : '';
+    tokenFill.className  = 'token-fill' + (pct >= 100 ? ' danger' : pct >= 75 ? ' warn' : '');
+  }
+
+  function calcSessionTokens() {
+    return messages.reduce((sum, m) => sum + estimateTokens(m.content), 0);
+  }
+
+  let toastTimer = null;
+
+  function showToast() {
+    const toast = document.getElementById('limit-toast');
+    toast.classList.add('show');
+    // Auto-dismiss after 8s
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 8000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById('limit-toast');
+    toast.classList.remove('show');
+    clearTimeout(toastTimer);
+  }
+
+  function showLimitBanner() {
+    sessionLimited = true;
+    userInput.disabled = true;
+    sendBtn.disabled   = true;
+    userInput.placeholder = 'Phiên này đã đạt giới hạn token.';
+    showToast();
+
+    const banner = document.createElement('div');
+    banner.className = 'limit-banner';
+    banner.id = 'limit-banner';
+    banner.innerHTML = `
+      <p>⚠️ Phiên chat đã đạt giới hạn <strong>2000 token</strong>.<br>
+         Vui lòng bắt đầu <strong>phiên mới</strong> để tiếp tục trò chuyện.</p>
+      <button onclick="newSession()">🔄 Bắt đầu phiên mới</button>`;
+    chatContainer.appendChild(banner);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+  });
+
+  function sendSuggestion(btn) {
+    userInput.value = btn.textContent;
+    sendMessage();
+  }
+
+  function appendMessage(role, content = '') {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    const wrap   = document.createElement('div');
+    wrap.className = `message ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? '🧑' : '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = content;
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    chatContainer.appendChild(wrap);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return bubble;
+  }
+
+  function renderMarkdown(text) {
+    return text
+      .replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${escHtml(code.trim())}</code></pre>`)
+      .replace(/`([^`]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text || isStreaming || sessionLimited || viewingOld) return;
+
+    // Pre-check: would this message push us over the limit?
+    const projected = calcSessionTokens() + estimateTokens(text);
+    if (projected > TOKEN_LIMIT) {
+      // Still send it but warn — or block immediately
+      // We block: show the banner before sending
+      messages.push({ role: 'user', content: text });
+      appendMessage('user', text);
+      userInput.value = '';
+      updateTokenBar(projected);
+      saveSession();
+      showLimitBanner();
+      return;
+    }
+
+    isStreaming = true;
+    sendBtn.disabled = true;
+    userInput.value  = '';
+    userInput.style.height = 'auto';
+
+    messages.push({ role: 'user', content: text });
+    appendMessage('user', text);
+    updateTokenBar(calcSessionTokens());
+
+    const botBubble = appendMessage('bot', '');
+    const cursor    = document.createElement('span');
+    cursor.className = 'cursor';
+    botBubble.appendChild(cursor);
+
+    let fullText = '';
+    let errorMsg = '';
+
+    // Show a waiting hint if the model hasn't produced anything yet
+    const waitTimer = setTimeout(() => {
+      if (!fullText) botBubble.textContent = '⏳ Đang chờ phản hồi từ model...';
+    }, 3000);
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, model: modelSelect.value }),
+      });
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            const json  = JSON.parse(data);
+            if (json.error) { errorMsg = json.error; continue; }
+            const delta = json.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullText += delta;
+              botBubble.innerHTML = renderMarkdown(fullText);
+              const cur = document.createElement('span');
+              cur.className = 'cursor';
+              botBubble.appendChild(cur);
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+          } catch {}
+        }
+      }
+    } catch (err) {
+      botBubble.textContent = '⚠️ Lỗi kết nối. Vui lòng thử lại.';
+      messages.pop();
+    } finally {
+      clearTimeout(waitTimer);
+      if (!fullText && !errorMsg && botBubble.textContent.startsWith('⏳')) {
+        errorMsg = 'Model không trả về nội dung. Vui lòng thử lại.';
+      }
+      if (!fullText && errorMsg) botBubble.textContent = '⚠️ ' + errorMsg;
+      else botBubble.innerHTML = renderMarkdown(fullText) || botBubble.textContent;
+
+      if (fullText) {
+        messages.push({ role: 'assistant', content: fullText });
+      }
+
+      const used = calcSessionTokens();
+      updateTokenBar(used);
+      saveSession();
+
+      isStreaming = false;
+
+      if (used >= TOKEN_LIMIT) {
+        showLimitBanner();
+      } else {
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }
+
+  function newSession() {
+    saveSession();
+    viewingOld     = false;
+    viewingId      = null;
+    currentId      = newId();
+    messages       = [];
+    totalTokens    = 0;
+    sessionLimited = false;
+    isStreaming     = false;
+
+    userInput.disabled    = false;
+    userInput.placeholder = 'Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)';
+    sendBtn.disabled = false;
+
+    updateTokenBar(0);
+
+    chatContainer.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="icon">💬</div>
+        <h2>Xin chào! Tôi là OLPAI</h2>
+        <p>Trợ lý AI thông minh, sẵn sàng trả lời mọi câu hỏi của bạn.</p>
+        <div class="suggestions">
+          <button class="suggestion-btn" onclick="sendSuggestion(this)">Giải thích lỗ đen vũ trụ là gì?</button>
+          <button class="suggestion-btn" onclick="sendSuggestion(this)">Viết code Python đọc file CSV</button>
+          <button class="suggestion-btn" onclick="sendSuggestion(this)">Dịch "Hello World" sang tiếng Việt</button>
+          <button class="suggestion-btn" onclick="sendSuggestion(this)">Tóm tắt AI là gì trong 3 câu</button>
+        </div>
+      </div>`;
+
+    renderHistory();
+    userInput.focus();
+  }
+
+  renderHistory();
+  userInput.focus();
+</script>
+</body>
+</html>
