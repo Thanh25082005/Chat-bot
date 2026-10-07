@@ -1,9 +1,24 @@
 services:
   olpai-chatbot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: olpai-chatbot:latest
     container_name: olpai-chatbot
     ports:
-      - "5000:5000"
-    env_file: .env
+      - "${APP_PORT:-5000}:5000"
+    env_file:
+      - .env
+    init: true
     restart: unless-stopped
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

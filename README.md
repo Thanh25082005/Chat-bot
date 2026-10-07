@@ -1,6 +1,6 @@
 # OlpAI Chatbot — HaUI
 
-Xem hướng dẫn cài đặt và sử dụng chi tiết tại [DOCS.md](DOCS.md).
+Tài liệu dự án được tổ chức trong thư mục [`docs/`](docs/): [tổng quan](docs/PROJECT.md), [hướng dẫn sử dụng](docs/USAGE.md) và [hướng dẫn Docker](docs/DOCKER.md).
 
 Ứng dụng chatbot hỏi đáp thông minh, sử dụng mô hình ngôn ngữ lớn (LLM) **DeepSeek-V4-Flash** thông qua API của **FPT AI**, được phát triển bởi Trường Đại học Công nghiệp Hà Nội (HaUI).
 
@@ -121,6 +121,10 @@ olpai-chatbot/
 ├── docker-compose.yml
 ├── .dockerignore
 ├── .env                    # API_BASE_URL, API_KEY, MODEL (không commit)
+├── docs/
+│   ├── PROJECT.md           # Tổng quan và kiến trúc
+│   ├── USAGE.md             # Cài đặt và sử dụng
+│   └── DOCKER.md            # Build, chạy và vận hành Docker
 └── README.md
 ```
 

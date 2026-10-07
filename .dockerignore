@@ -1,4 +1,7 @@
 .env
+.env.*
+.venv/
+venv/
 .git
 .gitignore
 __pycache__
@@ -6,3 +9,6 @@ __pycache__
 curl.txt
 README.md
 LICENSE
+docs/
+temp.env
+requirements_olp.txt
