@@ -1,6 +1,6 @@
 # OlpAI Chatbot — HaUI
 
-Tài liệu dự án được tổ chức trong thư mục [`docs/`](docs/): [tổng quan](docs/PROJECT.md), [hướng dẫn sử dụng](docs/USAGE.md), [hướng dẫn Docker](docs/DOCKER.md) và [triển khai Vercel](docs/VERCEL.md).
+Tài liệu dự án bắt đầu tại [docs/DOCS.md](docs/DOCS.md), gồm [tổng quan](docs/PROJECT.md), [hướng dẫn sử dụng](docs/USAGE.md), [hướng dẫn Docker](docs/DOCKER.md) và [triển khai Vercel](docs/VERCEL.md).
 
 Ứng dụng chatbot hỏi đáp thông minh, sử dụng mô hình ngôn ngữ lớn (LLM) **DeepSeek-V4-Flash** thông qua API của **FPT AI**, được phát triển bởi Trường Đại học Công nghiệp Hà Nội (HaUI).
 

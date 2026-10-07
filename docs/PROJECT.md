@@ -4,8 +4,10 @@ OLPAI Chatbot là ứng dụng hỏi đáp sử dụng Flask ở backend và gia
 
 ## Mục lục tài liệu
 
+- [Chỉ mục tài liệu](DOCS.md)
 - [Hướng dẫn sử dụng và cấu hình](USAGE.md)
 - [Hướng dẫn Docker](DOCKER.md)
+- [Triển khai Vercel](VERCEL.md)
 
 ## Chức năng chính
 
