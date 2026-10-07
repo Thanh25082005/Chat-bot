@@ -1,6 +1,6 @@
 # OlpAI Chatbot — HaUI
 
-Tài liệu dự án được tổ chức trong thư mục [`docs/`](docs/): [tổng quan](docs/PROJECT.md), [hướng dẫn sử dụng](docs/USAGE.md) và [hướng dẫn Docker](docs/DOCKER.md).
+Tài liệu dự án được tổ chức trong thư mục [`docs/`](docs/): [tổng quan](docs/PROJECT.md), [hướng dẫn sử dụng](docs/USAGE.md), [hướng dẫn Docker](docs/DOCKER.md) và [triển khai Vercel](docs/VERCEL.md).
 
 Ứng dụng chatbot hỏi đáp thông minh, sử dụng mô hình ngôn ngữ lớn (LLM) **DeepSeek-V4-Flash** thông qua API của **FPT AI**, được phát triển bởi Trường Đại học Công nghiệp Hà Nội (HaUI).
 
@@ -113,9 +113,10 @@ olpai-chatbot/
 ├── app.py                  # Flask backend, proxy API
 ├── templates/
 │   └── index.html          # Giao diện chatbot
-├── static/
+├── public/
 │   └── icon/
 │       └── logo-ngang.svg  # Logo HaUI
+├── vercel.json              # Cấu hình Flask Function trên Vercel
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
@@ -124,7 +125,8 @@ olpai-chatbot/
 ├── docs/
 │   ├── PROJECT.md           # Tổng quan và kiến trúc
 │   ├── USAGE.md             # Cài đặt và sử dụng
-│   └── DOCKER.md            # Build, chạy và vận hành Docker
+│   ├── DOCKER.md            # Build, chạy và vận hành Docker
+│   └── VERCEL.md            # Deploy lên vercel.app
 └── README.md
 ```
 

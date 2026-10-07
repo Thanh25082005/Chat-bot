@@ -16,7 +16,7 @@ RUN python -m pip install \
     -r requirements.txt
 
 COPY --chown=appuser:appuser app.py ./
-COPY --chown=appuser:appuser static ./static
+COPY --chown=appuser:appuser public ./public
 COPY --chown=appuser:appuser templates ./templates
 
 USER appuser

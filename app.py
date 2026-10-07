@@ -3,12 +3,14 @@ import json
 import time
 import logging
 import requests
-from flask import Flask, render_template, request, Response, stream_with_context
+from flask import Flask, render_template, request, Response, send_from_directory, stream_with_context
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+# Vercel serves public/ through its CDN. Flask has a small local fallback so
+# the same /icon/... URL also works with `python app.py` and Docker.
+app = Flask(__name__, static_folder=None)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("olpai")
 
@@ -24,6 +26,11 @@ MODEL = MODELS[0] if MODELS else None
 @app.route("/")
 def index():
     return render_template("index.html", models=MODELS)
+
+
+@app.route("/icon/<path:filename>")
+def icon(filename):
+    return send_from_directory(os.path.join(app.root_path, "public", "icon"), filename)
 
 
 @app.route("/chat", methods=["POST"])

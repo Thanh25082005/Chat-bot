@@ -10,5 +10,7 @@ curl.txt
 README.md
 LICENSE
 docs/
+vercel.json
+.python-version
 temp.env
 requirements_olp.txt

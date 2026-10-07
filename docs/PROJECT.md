@@ -15,7 +15,7 @@ OLPAI Chatbot là ứng dụng hỏi đáp sử dụng Flask ở backend và gia
 - Hiển thị Markdown cơ bản và các câu hỏi gợi ý.
 - Theo dõi ước lượng token, giới hạn 2.000 token cho mỗi phiên ở giao diện.
 - Tự thử model khác khi model hiện tại nhận HTTP 429.
-- Chạy được trực tiếp bằng Python hoặc đóng gói bằng Docker/Gunicorn.
+- Chạy được trực tiếp bằng Python, Docker/Gunicorn hoặc Vercel Functions.
 
 ## Luồng xử lý
 
@@ -40,11 +40,12 @@ API key chỉ nằm trong biến môi trường của backend. Frontend không g
 |---|---|
 | `app.py` | Flask app, proxy `/chat`, streaming SSE và xử lý lỗi API. |
 | `templates/index.html` | Giao diện, gửi tin nhắn, chọn model và lịch sử chat. |
-| `static/icon/` | Logo sử dụng trong giao diện. |
+| `public/icon/` | Logo tĩnh được Vercel CDN và Flask phục vụ. |
 | `check_key.py` | Kiểm tra API key và các model đã cấu hình. |
 | `temp.env` | Mẫu cấu hình không chứa key thật. |
 | `Dockerfile` | Tạo image production chạy Gunicorn với user không phải root. |
 | `docker-compose.yml` | Khai báo dịch vụ, cổng, biến môi trường và healthcheck. |
+| `vercel.json` | Cấu hình thời gian chạy cho Flask Function trên Vercel. |
 | `docs/` | Tài liệu dự án, sử dụng và Docker. |
 
 ## API nội bộ
