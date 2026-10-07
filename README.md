@@ -82,7 +82,8 @@
 pip install -r requirements.txt
 
 # 2. Cấu hình API Key trong .env
-printf 'API_KEY="your-api-key"\nMODEL="DeepSeek-V4-Flash"\n' > .env
+printf 'API_BASE_URL="https://token-api.fpt.ai/v1"\nAPI_KEY="your-api-key"\nMODEL="DeepSeek-V4-Flash"\n' > .env
+# API_BASE_URL: endpoint tương thích OpenAI bất kỳ (mặc định FPT AI)
 
 # 3. Chạy ứng dụng
 python app.py
@@ -117,7 +118,7 @@ olpai-chatbot/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
-├── .env                    # API_KEY, MODEL (không commit)
+├── .env                    # API_BASE_URL, API_KEY, MODEL (không commit)
 └── README.md
 ```
 

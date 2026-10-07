@@ -12,7 +12,9 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("olpai")
 
-API_URL = "https://token-api.fpt.ai/v1/chat/completions"
+# Any OpenAI-compatible provider; defaults to FPT AI
+API_BASE_URL = (os.getenv("API_BASE_URL") or "https://token-api.fpt.ai/v1").rstrip("/")
+API_URL = f"{API_BASE_URL}/chat/completions"
 API_KEY = os.getenv("API_KEY")
 # MODEL in .env is a comma-separated list; the first one is the default
 MODELS = [m.strip() for m in (os.getenv("MODEL") or "").split(",") if m.strip()]
@@ -52,13 +54,30 @@ def chat():
     def sse_error(msg):
         return f"data: {json.dumps({'error': msg}, ensure_ascii=False)}\n\n"
 
+    def open_stream():
+        # On 429 (rate limit) fall back to the other configured models
+        candidates = [model] + [m for m in MODELS if m != model]
+        for m in candidates:
+            payload["model"] = m
+            # (connect timeout, max silence between chunks)
+            resp = requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=(10, 45))
+            log.info("upstream model=%s status=%s", m, resp.status_code)
+            if resp.status_code != 429:
+                return resp
+            log.warning("model %s rate-limited: %s", m, resp.text[:300])
+            resp.close()
+        return None
+
     def generate():
         start = time.time()
         first = None
         try:
-            # (connect timeout, max silence between chunks)
-            with requests.post(API_URL, headers=headers, json=payload, stream=True, timeout=(10, 45)) as resp:
-                log.info("upstream status=%s headers_in=%.1fs", resp.status_code, time.time() - start)
+            resp = open_stream()
+            if resp is None:
+                yield sse_error("Model đang quá tải (giới hạn lượt dùng). Vui lòng thử lại sau ít phút.")
+                return
+            with resp:
+                log.info("upstream headers_in=%.1fs", time.time() - start)
                 if resp.status_code != 200:
                     body = resp.text[:300]
                     log.warning("upstream error %s: %s", resp.status_code, body)
