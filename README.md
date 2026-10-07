@@ -1,5 +1,7 @@
 # OlpAI Chatbot — HaUI
 
+Xem hướng dẫn cài đặt và sử dụng chi tiết tại [DOCS.md](DOCS.md).
+
 Ứng dụng chatbot hỏi đáp thông minh, sử dụng mô hình ngôn ngữ lớn (LLM) **DeepSeek-V4-Flash** thông qua API của **FPT AI**, được phát triển bởi Trường Đại học Công nghiệp Hà Nội (HaUI).
 
 ---
